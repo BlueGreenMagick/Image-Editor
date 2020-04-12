@@ -1,5 +1,8 @@
+
+*/meta.json
+bin/
+
 .code-workspace
 .log
-*/meta.json
+.vscode/
 *~
-bin/
