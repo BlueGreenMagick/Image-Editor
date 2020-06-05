@@ -80,13 +80,12 @@ class AnnotateDialog(QDialog):
             self.save_svg(svg_str)
     
     def save_svg(self, svg_str):
-        # TODO: append to name if name.svg already exists
         image_path = self.image_path.resolve().as_posix()
-        if image_path[-3:] != "svg":
-            image_path = ".".join(image_path.split('.')[:-1]) + ".svg"
-        Path(image_path).write_text(svg_str)
-        if image_path != self.image_path:
-            self.replace_img_src(image_path.split('/collection.media/')[-1])
+        img_name = image_path.split('/collection.media/')[-1]
+        desired_name = '.'.join(img_name.split('.')[:-1]) + '.svg'
+        new_name = mw.col.media.write_data(desired_name, svg_str.encode('utf-8'))
+        self.replace_img_src(new_name)
+
         if self.close_queued:
             self.close()
 
