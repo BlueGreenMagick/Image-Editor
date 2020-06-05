@@ -1,6 +1,7 @@
 import os
 import sys
 import base64
+from pathlib import Path
 
 from aqt import mw
 from aqt.qt import *
@@ -23,6 +24,7 @@ class AnnotateDialog(QDialog):
         QDialog.__init__(self)
         mw.setupDialogGC(self)
         self.image_path = image_path
+        self.close_queued = False
         self.setupUI()
         
 
@@ -51,5 +53,25 @@ class AnnotateDialog(QDialog):
         if cmd == "img_src":
             encoded_img_path = base64.b64encode(str(self.image_path).encode("utf-8")).decode("ascii")
             self.web.eval("ankiAddonSetImg('%s', 'png')"%encoded_img_path)
-            tooltip("ABC")
+            #TODO: as data uri not relative link
+        elif cmd.startswith("svg_save:"):
+            svg_str = cmd[len("svg_save:"):]
+            self.save_svg(svg_str)
+    
+    def save_svg(self, svg_str):
+        #TODO: replace image reference to new image path in anki card field
+        image_path = str(self.image_path)
+        if image_path[-3:] != "svg":
+            image_path = ".".join(image_path.split('.')[:-1]) + ".svg"
+        Path(image_path).write_text(svg_str)
+        if self.close_queued:
+            self.close()
 
+    def closeEvent(self, evt):
+        if self.close_queued:
+            del mw.anodial
+            evt.accept()
+        else:
+            self.web.eval("ankiAddonSaveImg()")
+            self.close_queued = True
+            evt.ignore()

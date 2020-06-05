@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 
 from anki.hooks import addHook
 from aqt.editor import EditorWebView
@@ -14,7 +15,7 @@ def add_context_menu_action(wv: EditorWebView, m: QMenu):
     url = context_data.mediaUrl()
     image_name = url.fileName()
     # Using url.path() doesn't return the absolute path
-    image_path = os.path.join(mw.col.media.dir(), image_name)
+    image_path = Path(mw.col.media.dir()) / image_name
     if url.isValid():
         a = m.addAction("Annotate Image")
         a.triggered.connect(lambda _: open_annotate_window(wv, image_path))
