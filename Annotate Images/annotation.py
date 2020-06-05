@@ -63,8 +63,8 @@ class AnnotateDialog(QDialog):
     
     def on_bridge_cmd(self, cmd):
         if cmd == "img_src":
-            img_path = self.image_path
-            img_format = str(img_path).split('.')[-1].lower()
+            img_path = self.image_path.resolve().as_posix()
+            img_format = img_path.split('.')[-1].lower()
             if img_format not in MIME_TYPE:
                 tooltip("Image Not Supported")
                 return
