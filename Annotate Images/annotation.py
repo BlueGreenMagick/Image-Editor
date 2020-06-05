@@ -13,6 +13,16 @@ method_draw_path = os.path.join(
 )
 
 
+MIME_TYPE = {
+    "png": "image/png",
+    "jpg": "image/jpeg",
+    "jpeg": "image/jpeg",
+    "webp": "image/webp",
+    "bmp": "image/bmp",
+    "ico": "image/vnd.microsoft.icon",
+    "svg": "image/svg+xml"
+}
+
 class myPage(AnkiWebPage):
     def acceptNavigationRequest(self, url, navType, isMainFrame):
         "Needed so the link don't get opened in external browser"
@@ -51,9 +61,18 @@ class AnnotateDialog(QDialog):
     
     def on_bridge_cmd(self, cmd):
         if cmd == "img_src":
-            encoded_img_path = base64.b64encode(str(self.image_path).encode("utf-8")).decode("ascii")
-            self.web.eval("ankiAddonSetImg('%s', 'png')"%encoded_img_path)
-            #TODO: as data uri not relative link
+            img_path = self.image_path
+            img_format = str(img_path).split('.')[-1].lower()
+            if img_format not in MIME_TYPE:
+                tooltip("Image Not Supported")
+                return
+            
+            mime_str = MIME_TYPE[img_format]
+            encoded_img_data = base64.b64encode(img_path.read_bytes()).decode()
+            img_data_url = "data:{};base64,{}".format(mime_str, encoded_img_data)
+            mw.anno_url = img_data_url
+            self.web.eval("ankiAddonSetImg('{}', '{}')".format(img_data_url, img_format))
+
         elif cmd.startswith("svg_save:"):
             svg_str = cmd[len("svg_save:"):]
             self.save_svg(svg_str)
