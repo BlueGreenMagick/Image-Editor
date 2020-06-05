@@ -1,0 +1,4 @@
+[submodule "Annotate Images/web/Method-Draw"]
+	path = Annotate Images/web/Method-Draw
+	url = https://github.com/BlueGreenMagick/Method-Draw.git
+	branch = only-editor

@@ -20,8 +20,8 @@ def add_context_menu_action(wv: EditorWebView, m: QMenu):
         a.triggered.connect(lambda _: open_annotate_window(wv, image_path))
 
 
-def open_annotate_window(wv, path):
-    mw.anodial = AnnotateDialog()
+def open_annotate_window(wv, img_path):
+    mw.anodial = AnnotateDialog(img_path)
 
 
 addHook("EditorWebView.contextMenuEvent", add_context_menu_action)

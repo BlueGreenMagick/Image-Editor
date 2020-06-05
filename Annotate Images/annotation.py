@@ -1,9 +1,11 @@
 import os
 import sys
+import base64
 
 from aqt import mw
 from aqt.qt import *
 from aqt.webview import AnkiWebView, AnkiWebPage
+from aqt.utils import tooltip
 
 method_draw_path = os.path.join(
     os.path.dirname(__file__), "web", "Method-Draw", "editor", "index.html"
@@ -17,10 +19,12 @@ class myPage(AnkiWebPage):
 
 
 class AnnotateDialog(QDialog):
-    def __init__(self):
+    def __init__(self, image_path):
         QDialog.__init__(self)
         mw.setupDialogGC(self)
+        self.image_path = image_path
         self.setupUI()
+        
 
     def setupUI(self):
         mainLayout = QVBoxLayout()
@@ -31,6 +35,7 @@ class AnnotateDialog(QDialog):
         self.web._page = myPage(self.web._onBridgeCmd)
         self.web.setPage(self.web._page)
         self.web.setUrl(url)
+        self.web.set_bridge_command(self.on_bridge_cmd, self)
         mainLayout.addWidget(self.web, stretch=1)
 
         self.move(
@@ -41,3 +46,10 @@ class AnnotateDialog(QDialog):
         self.setWindowTitle("Annotate Image")
         self.setMinimumWidth(640)
         self.show()
+    
+    def on_bridge_cmd(self, cmd):
+        if cmd == "img_src":
+            encoded_img_path = base64.b64encode(str(self.image_path).encode("utf-8")).decode("ascii")
+            self.web.eval("ankiAddonSetImg('%s', 'png')"%encoded_img_path)
+            tooltip("ABC")
+
