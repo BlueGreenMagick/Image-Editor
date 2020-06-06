@@ -29,7 +29,7 @@ class myPage(AnkiWebPage):
     def acceptNavigationRequest(self, url, navType, isMainFrame):
         "Needed so the link don't get opened in external browser"
         return True
-        
+
 class myWebView(AnkiWebView):
     def contextMenuEvent(self, evt: QContextMenuEvent) -> None:
         return 
@@ -116,6 +116,7 @@ class AnnotateDialog(QDialog):
         elif cmd.startswith("svg_save:"):
             svg_str = cmd[len("svg_save:"):]
             self.save_svg(svg_str)
+            tooltip("Image Saved")
 
     def load_img(self):
         img_path = self.image_path
