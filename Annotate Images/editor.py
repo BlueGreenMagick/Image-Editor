@@ -19,7 +19,7 @@ def add_context_menu_action(wv: EditorWebView, m: QMenu):
     # Using url.path() doesn't return the absolute path
     image_path = Path(mw.col.media.dir()) / image_name
     if url.isValid():
-        a = m.addAction("Annotate Image")
+        a = m.addAction("Edit Image")
         a.triggered.connect(lambda _: open_annotate_window(wv, image_path))
 
 
