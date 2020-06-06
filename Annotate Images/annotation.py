@@ -6,7 +6,7 @@ from pathlib import Path
 from aqt import mw
 from aqt.qt import *
 from aqt.webview import AnkiWebView, AnkiWebPage
-from aqt.utils import tooltip, showText
+from aqt.utils import tooltip, showText, askUserDialog
 
 method_draw_path = os.path.join(
     os.path.dirname(__file__), "web", "Method-Draw", "editor", "index.html"
@@ -39,6 +39,14 @@ class AnnotateDialog(QDialog):
         self.close_queued = False
         self.setupUI()
         
+    def closeEvent(self, evt):
+        if self.close_queued:
+            del mw.anodial
+            evt.accept()
+        else:
+            self.ask_on_close()
+            evt.ignore()
+                
 
     def setupUI(self):
         mainLayout = QVBoxLayout()
@@ -52,14 +60,13 @@ class AnnotateDialog(QDialog):
         self.web.set_bridge_command(self.on_bridge_cmd, self)
         mainLayout.addWidget(self.web, stretch=1)
 
-        okButton = QPushButton("OK")
-        okButton.clicked.connect(self.clicked_ok)
+        okButton = QPushButton("Save")
+        okButton.clicked.connect(self.save)
         okButton.setDefault(True)
-        okButton.setShortcut("Ctrl+Return")
-        cancelButton = QPushButton("Cancel")
-        cancelButton.clicked.connect(self.clicked_cancel)
+        cancelButton = QPushButton("Discard")
+        cancelButton.clicked.connect(self.discard)
         resetButton = QPushButton("Reset")
-        resetButton.clicked.connect(self.clicked_reset)
+        resetButton.clicked.connect(self.reset)
 
         btnLayout = QHBoxLayout()
         btnLayout.addStretch(1)
@@ -78,18 +85,18 @@ class AnnotateDialog(QDialog):
         self.setMinimumHeight(400)
         self.show()
 
-    def clicked_cancel(self):
+    def discard(self):
         self.close_queued = True
         self.close()
     
-    def clicked_ok(self):
-        self.web.eval("ankiAddonSaveImg()")
+    def save(self):
         self.close_queued = True
+        self.web.eval("ankiAddonSaveImg()")
     
-    def clicked_reset(self):
+    def reset(self):
         self.load_img()
 
-    
+
 
     def on_bridge_cmd(self, cmd):
         if cmd == "img_src":
@@ -130,11 +137,16 @@ class AnnotateDialog(QDialog):
         pathstr = base64.b64encode(str(path).encode("utf-8")).decode("ascii")
         self.editor_wv.eval("addonAnnoChangeSrc('{}')".format(pathstr))
 
-    def closeEvent(self, evt):
-        if self.close_queued:
-            del mw.anodial
-            evt.accept()
-        else:
-            self.web.eval("ankiAddonSaveImg()")
-            self.close_queued = True
-            evt.ignore()
+    def ask_on_close(self):
+        opts = [
+            "Cancel",
+            "Discard",
+            "Save"
+        ]
+        diag = askUserDialog("Discard Changes?", opts, parent=self)
+        diag.setDefault(0)
+        ret = diag.run()
+        if ret == opts[1]:
+            self.discard()
+        elif ret == opts[2]:
+            self.save()
