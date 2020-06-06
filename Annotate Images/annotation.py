@@ -52,6 +52,22 @@ class AnnotateDialog(QDialog):
         self.web.set_bridge_command(self.on_bridge_cmd, self)
         mainLayout.addWidget(self.web, stretch=1)
 
+        okButton = QPushButton("OK")
+        okButton.clicked.connect(self.clicked_ok)
+        okButton.setDefault(True)
+        okButton.setShortcut("Ctrl+Return")
+        cancelButton = QPushButton("Cancel")
+        cancelButton.clicked.connect(self.clicked_cancel)
+        resetButton = QPushButton("Reset")
+        resetButton.clicked.connect(self.clicked_reset)
+
+        btnLayout = QHBoxLayout()
+        btnLayout.addStretch(1)
+        btnLayout.addWidget(okButton)
+        btnLayout.addWidget(cancelButton)
+        btnLayout.addWidget(resetButton)
+        mainLayout.addLayout(btnLayout)
+
         self.move(
             QDesktopWidget().availableGeometry().center()
             - self.frameGeometry().center()
@@ -59,28 +75,46 @@ class AnnotateDialog(QDialog):
 
         self.setWindowTitle("Annotate Image")
         self.setMinimumWidth(640)
+        self.setMinimumHeight(400)
         self.show()
+
+    def clicked_cancel(self):
+        self.close_queued = True
+        self.close()
     
+    def clicked_ok(self):
+        self.web.eval("ankiAddonSaveImg()")
+        self.close_queued = True
+    
+    def clicked_reset(self):
+        self.load_img()
+
+    
+
     def on_bridge_cmd(self, cmd):
         if cmd == "img_src":
-            img_path = self.image_path
-            img_path_str = self.image_path.resolve().as_posix()
-            img_format = img_path_str.split('.')[-1].lower()
-            if img_format not in MIME_TYPE:
-                tooltip("Image Not Supported")
-                return
-            
-            if img_format == "svg":
-                img_data = base64.b64encode(img_path.read_text().encode("utf-8")).decode("ascii")
-            else:
-                mime_str = MIME_TYPE[img_format]
-                encoded_img_data = base64.b64encode(img_path.read_bytes()).decode()
-                img_data = "data:{};base64,{}".format(mime_str, encoded_img_data)
-            self.web.eval("ankiAddonSetImg('{}', '{}')".format(img_data, img_format))
+            self.load_img()
 
         elif cmd.startswith("svg_save:"):
             svg_str = cmd[len("svg_save:"):]
             self.save_svg(svg_str)
+
+    def load_img(self):
+        img_path = self.image_path
+        img_path_str = self.image_path.resolve().as_posix()
+        img_format = img_path_str.split('.')[-1].lower()
+        if img_format not in MIME_TYPE:
+            tooltip("Image Not Supported")
+            return
+        
+        if img_format == "svg":
+            img_data = base64.b64encode(img_path.read_text().encode("utf-8")).decode("ascii")
+        else:
+            mime_str = MIME_TYPE[img_format]
+            encoded_img_data = base64.b64encode(img_path.read_bytes()).decode()
+            img_data = "data:{};base64,{}".format(mime_str, encoded_img_data)
+        self.web.eval("ankiAddonSetImg('{}', '{}')".format(img_data, img_format))
+   
     
     def save_svg(self, svg_str):
         image_path = self.image_path.resolve().as_posix()
