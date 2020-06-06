@@ -2,6 +2,7 @@ import os
 import sys
 import base64
 from pathlib import Path
+from threading import Timer
 
 from aqt import mw
 from aqt.qt import *
@@ -46,8 +47,8 @@ class AnnotateDialog(QDialog):
             save_geom(self, "anno_dial")
             evt.accept()
         else:
-            self.ask_on_close()
-            evt.ignore()
+            self.ask_on_close(evt)
+            
                 
 
     def setupUI(self):
@@ -144,7 +145,7 @@ class AnnotateDialog(QDialog):
         pathstr = base64.b64encode(str(path).encode("utf-8")).decode("ascii")
         self.editor_wv.eval("addonAnnoChangeSrc('{}')".format(pathstr))
 
-    def ask_on_close(self):
+    def ask_on_close(self, evt):
         opts = [
             "Cancel",
             "Discard",
@@ -153,7 +154,10 @@ class AnnotateDialog(QDialog):
         diag = askUserDialog("Discard Changes?", opts, parent=self)
         diag.setDefault(0)
         ret = diag.run()
-        if ret == opts[1]:
-            self.discard()
+        if ret == opts[0]:
+            evt.ignore()
+        elif ret == opts[1]:
+            evt.accept()
         elif ret == opts[2]:
             self.save()
+            evt.ignore()
