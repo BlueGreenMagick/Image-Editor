@@ -29,7 +29,10 @@ class myPage(AnkiWebPage):
     def acceptNavigationRequest(self, url, navType, isMainFrame):
         "Needed so the link don't get opened in external browser"
         return True
-
+        
+class myWebView(AnkiWebView):
+    def contextMenuEvent(self, evt: QContextMenuEvent) -> None:
+        return 
 
 class AnnotateDialog(QDialog):
     def __init__(self, image_path, editor_wv):
