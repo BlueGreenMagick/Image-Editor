@@ -8,10 +8,11 @@ from aqt.qt import *
 from aqt.webview import AnkiWebView, AnkiWebPage
 from aqt.utils import tooltip, showText, askUserDialog
 
+from .utils import load_geom, save_geom
+
 method_draw_path = os.path.join(
     os.path.dirname(__file__), "web", "Method-Draw", "editor", "index.html"
 )
-
 
 MIME_TYPE = {
     "png": "image/png",
@@ -42,6 +43,7 @@ class AnnotateDialog(QDialog):
     def closeEvent(self, evt):
         if self.close_queued:
             del mw.anodial
+            save_geom(self, "anno_dial")
             evt.accept()
         else:
             self.ask_on_close()
@@ -75,15 +77,20 @@ class AnnotateDialog(QDialog):
         btnLayout.addWidget(resetButton)
         mainLayout.addLayout(btnLayout)
 
+        self.setWindowTitle("Annotate Image")
+
+        self.setMinimumWidth(400)
+        self.setMinimumHeight(400)
+        self.setGeometry(0, 0, 640, 640)
         self.move(
             QDesktopWidget().availableGeometry().center()
             - self.frameGeometry().center()
         )
-
-        self.setWindowTitle("Annotate Image")
-        self.setMinimumWidth(640)
-        self.setMinimumHeight(400)
+        geom = load_geom("anno_dial")
+        if geom:
+            self.restoreGeometry(geom)
         self.show()
+
 
     def discard(self):
         self.close_queued = True
