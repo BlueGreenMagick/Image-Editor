@@ -35,12 +35,13 @@ class myWebView(AnkiWebView):
         return 
 
 class AnnotateDialog(QDialog):
-    def __init__(self, image_path, editor_wv):
+    def __init__(self, editor, image_path = "", new_image = False):
         QDialog.__init__(self)
         mw.setupDialogGC(self)
-        self.editor_wv = editor_wv
-        self.editor = editor_wv.editor
+        self.editor_wv = editor.web
+        self.editor = editor
         self.image_path = image_path
+        self.create_new = new_image
         self.close_queued = False
         self.setupUI()
         
@@ -68,7 +69,6 @@ class AnnotateDialog(QDialog):
 
         okButton = QPushButton("Save")
         okButton.clicked.connect(self.save)
-        okButton.setDefault(True)
         cancelButton = QPushButton("Discard")
         cancelButton.clicked.connect(self.discard)
         resetButton = QPushButton("Reset")
@@ -111,11 +111,16 @@ class AnnotateDialog(QDialog):
 
     def on_bridge_cmd(self, cmd):
         if cmd == "img_src":
-            self.load_img()
+            if not self.create_new:
+                self.load_img()
 
         elif cmd.startswith("svg_save:"):
-            svg_str = cmd[len("svg_save:"):]
-            self.save_svg(svg_str)
+            if self.create_new:
+                svg_str = cmd[len("svg_save:"):]
+                self.create_svg(svg_str)
+            else:
+                svg_str = cmd[len("svg_save:"):]
+                self.save_svg(svg_str)
             tooltip("Image Saved")
 
     def load_img(self):
@@ -134,6 +139,15 @@ class AnnotateDialog(QDialog):
             img_data = "data:{};base64,{}".format(mime_str, encoded_img_data)
         self.web.eval("ankiAddonSetImg('{}', '{}')".format(img_data, img_format))
    
+    def create_svg(self, svg_str):
+        new_name = mw.col.media.write_data("svg_drawing.svg", svg_str.encode('utf-8'))
+        img_el = '"<img src=\\"{}\\">"'.format(new_name)
+        self.editor_wv.eval('insertHtmlRemovingInitialBR({})'.format(img_el))
+        self.new_image = False
+        self.image_path = Path(mw.col.media.dir()) / new_name
+
+        if self.close_queued:
+            self.close()
     
     def save_svg(self, svg_str):
         image_path = self.image_path.resolve().as_posix()
