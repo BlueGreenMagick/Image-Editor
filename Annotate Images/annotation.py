@@ -38,21 +38,22 @@ class myWebView(AnkiWebView):
 
 
 class AnnotateDialog(QDialog):
-    def __init__(self, editor, image_path = "", new_image = False):
-        QDialog.__init__(self, editor.web, Qt.Window)
+    def __init__(self, editor, image_path="", image_src="", new_image=False):
+        QDialog.__init__(self, editor.widget, Qt.Window)
         mw.setupDialogGC(self)
         self.editor_wv = editor.web
         self.editor = editor
         self.image_path = image_path
-        self.image_name = image_name
+        self.image_src = image_src
         self.create_new = new_image
         self.close_queued = False
+        self.check_editor_image_selected()
         self.setupUI()
 
     def closeEvent(self, evt):
         if self.close_queued:
-            del mw.anodial
             save_geom(self, "anno_dial")
+            del mw.annodial
             evt.accept()
         else:
             self.ask_on_close(evt)
@@ -88,10 +89,6 @@ class AnnotateDialog(QDialog):
         self.setMinimumWidth(100)
         self.setMinimumHeight(100)
         self.setGeometry(0, 0, 640, 640)
-        self.move(
-            QDesktopWidget().availableGeometry().center()
-            - self.frameGeometry().center()
-        )
         geom = load_geom("anno_dial")
         if geom:
             self.restoreGeometry(geom)
@@ -122,6 +119,24 @@ class AnnotateDialog(QDialog):
                 svg_str = cmd[len("svg_save:") :]
                 self.save_svg(svg_str)
             tooltip("Image Saved")
+
+    def check_editor_image_selected(self):
+        def check_same_image_selected(src):
+            if src != self.image_src:
+                fld_txt = self.editor.note.fields[self.editor.currentField]
+                err_msg = """Image Editor Error: Unmatching image src\n
+Please report the issue in this addon's github https:github.com/bluegreenmagick/image-editor
+
+Src1: {name1}
+Src2: {name2}
+Note field content: {fld}
+""".format(name1=src, name2=self.image_src, fld=fld_txt)
+                showText(err_msg, parent=self.editor.widget)
+
+                self.close_queued = True
+                self.close()
+
+        self.editor_wv.evalWithCallback("addonAnno_getSrc()", check_same_image_selected)
 
     def load_img(self):
         img_path = self.image_path

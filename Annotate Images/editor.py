@@ -1,17 +1,23 @@
 import os
 from pathlib import Path
 
+from anki import version as ANKIVER
 from anki.hooks import addHook
-from aqt.editor import EditorWebView, Editor
 from aqt import mw
+from aqt.editor import EditorWebView, Editor
 from aqt.utils import tooltip
 from aqt.qt import QMenu
 from aqt import gui_hooks
+from aqt.utils import showText
 
 from .annotation import AnnotateDialog
 
 ADDON_PACKAGE = mw.addonManager.addonFromModule(__name__)
 ICONS_PATH = os.path.join(os.path.dirname(__file__), "icons")
+
+
+def open_annotate_window(editor, image_path = "", image_src = "", new_image = False):
+    mw.annodial = AnnotateDialog(editor, image_path = image_path, image_src = image_src, new_image = new_image)
 
 def add_context_menu_action(wv: EditorWebView, m: QMenu):
     context_data = wv.page().contextMenuData()
@@ -19,13 +25,10 @@ def add_context_menu_action(wv: EditorWebView, m: QMenu):
     image_name = url.fileName()
     # Using url.path() doesn't return the absolute path
     image_path = Path(mw.col.media.dir()) / image_name
-    if url.isValid():
+    if url.isValid() and image_path.is_file():
         a = m.addAction("Edit Image")
-        a.triggered.connect(lambda _: open_annotate_window(wv.editor, image_path = image_path))
+        a.triggered.connect(lambda _, path=image_path, nm=image_name: open_annotate_window(wv.editor, image_path=path, image_src=url.toString()))
 
-
-def open_annotate_window(editor, image_path = "", new_image = False):
-    mw.anodial = AnnotateDialog(editor, image_path = image_path, new_image = new_image)
 
 def insert_js(web_content, context):
     if not isinstance(context, Editor):
