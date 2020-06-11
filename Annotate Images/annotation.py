@@ -118,7 +118,7 @@ class AnnotateDialog(QDialog):
             else:
                 svg_str = cmd[len("svg_save:") :]
                 self.save_svg(svg_str)
-            tooltip("Image Saved")
+            tooltip("Image Saved", parent=self.editor.widget)
 
     def check_editor_image_selected(self):
         def check_same_image_selected(src):
@@ -143,7 +143,7 @@ Note field content: {fld}
         img_path_str = self.image_path.resolve().as_posix()
         img_format = img_path_str.split(".")[-1].lower()
         if img_format not in MIME_TYPE:
-            tooltip("Image Not Supported")
+            tooltip("Image Not Supported", parent=self.editor.widget)
             return
 
         if img_format == "svg":
