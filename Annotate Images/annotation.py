@@ -36,7 +36,7 @@ class myWebView(AnkiWebView):
 
 class AnnotateDialog(QDialog):
     def __init__(self, editor, image_path = "", new_image = False):
-        QDialog.__init__(self)
+        QDialog.__init__(self, editor.web, Qt.Window)
         mw.setupDialogGC(self)
         self.editor_wv = editor.web
         self.editor = editor
