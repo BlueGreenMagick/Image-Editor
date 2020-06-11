@@ -83,8 +83,8 @@ class AnnotateDialog(QDialog):
 
         self.setWindowTitle("Annotate Image")
 
-        self.setMinimumWidth(400)
-        self.setMinimumHeight(400)
+        self.setMinimumWidth(100)
+        self.setMinimumHeight(100)
         self.setGeometry(0, 0, 640, 640)
         self.move(
             QDesktopWidget().availableGeometry().center()
