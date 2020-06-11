@@ -22,17 +22,20 @@ MIME_TYPE = {
     "webp": "image/webp",
     "bmp": "image/bmp",
     "ico": "image/vnd.microsoft.icon",
-    "svg": "image/svg+xml"
+    "svg": "image/svg+xml",
 }
+
 
 class myPage(AnkiWebPage):
     def acceptNavigationRequest(self, url, navType, isMainFrame):
         "Needed so the link don't get opened in external browser"
         return True
 
+
 class myWebView(AnkiWebView):
     def contextMenuEvent(self, evt: QContextMenuEvent) -> None:
-        return 
+        return
+
 
 class AnnotateDialog(QDialog):
     def __init__(self, editor, image_path = "", new_image = False):
@@ -41,10 +44,11 @@ class AnnotateDialog(QDialog):
         self.editor_wv = editor.web
         self.editor = editor
         self.image_path = image_path
+        self.image_name = image_name
         self.create_new = new_image
         self.close_queued = False
         self.setupUI()
-        
+
     def closeEvent(self, evt):
         if self.close_queued:
             del mw.anodial
@@ -52,8 +56,6 @@ class AnnotateDialog(QDialog):
             evt.accept()
         else:
             self.ask_on_close(evt)
-            
-                
 
     def setupUI(self):
         mainLayout = QVBoxLayout()
@@ -95,18 +97,16 @@ class AnnotateDialog(QDialog):
             self.restoreGeometry(geom)
         self.show()
 
-
     def discard(self):
         self.close_queued = True
         self.close()
-    
+
     def save(self):
         self.close_queued = True
         self.web.eval("ankiAddonSaveImg()")
-    
+
     def reset(self):
         self.load_img()
-
 
 
     def on_bridge_cmd(self, cmd):
@@ -116,44 +116,46 @@ class AnnotateDialog(QDialog):
 
         elif cmd.startswith("svg_save:"):
             if self.create_new:
-                svg_str = cmd[len("svg_save:"):]
+                svg_str = cmd[len("svg_save:") :]
                 self.create_svg(svg_str)
             else:
-                svg_str = cmd[len("svg_save:"):]
+                svg_str = cmd[len("svg_save:") :]
                 self.save_svg(svg_str)
             tooltip("Image Saved")
 
     def load_img(self):
         img_path = self.image_path
         img_path_str = self.image_path.resolve().as_posix()
-        img_format = img_path_str.split('.')[-1].lower()
+        img_format = img_path_str.split(".")[-1].lower()
         if img_format not in MIME_TYPE:
             tooltip("Image Not Supported")
             return
-        
+
         if img_format == "svg":
-            img_data = base64.b64encode(img_path.read_text().encode("utf-8")).decode("ascii")
+            img_data = base64.b64encode(img_path.read_text().encode("utf-8")).decode(
+                "ascii"
+            )
         else:
             mime_str = MIME_TYPE[img_format]
             encoded_img_data = base64.b64encode(img_path.read_bytes()).decode()
             img_data = "data:{};base64,{}".format(mime_str, encoded_img_data)
         self.web.eval("ankiAddonSetImg('{}', '{}')".format(img_data, img_format))
-   
+
     def create_svg(self, svg_str):
-        new_name = mw.col.media.write_data("svg_drawing.svg", svg_str.encode('utf-8'))
+        new_name = mw.col.media.write_data("svg_drawing.svg", svg_str.encode("utf-8"))
         img_el = '"<img src=\\"{}\\">"'.format(new_name)
-        self.editor_wv.eval('insertHtmlRemovingInitialBR({})'.format(img_el))
+        self.editor_wv.eval("insertHtmlRemovingInitialBR({})".format(img_el))
         self.new_image = False
         self.image_path = Path(mw.col.media.dir()) / new_name
 
         if self.close_queued:
             self.close()
-    
+
     def save_svg(self, svg_str):
         image_path = self.image_path.resolve().as_posix()
-        img_name = image_path.split('/collection.media/')[-1]
-        desired_name = '.'.join(img_name.split('.')[:-1]) + '.svg'
-        new_name = mw.col.media.write_data(desired_name, svg_str.encode('utf-8'))
+        img_name = image_path.split("/collection.media/")[-1]
+        desired_name = ".".join(img_name.split(".")[:-1]) + ".svg"
+        new_name = mw.col.media.write_data(desired_name, svg_str.encode("utf-8"))
         self.replace_img_src(new_name)
 
         if self.close_queued:
@@ -161,14 +163,10 @@ class AnnotateDialog(QDialog):
 
     def replace_img_src(self, path):
         pathstr = base64.b64encode(str(path).encode("utf-8")).decode("ascii")
-        self.editor_wv.eval("addonAnnoChangeSrc('{}')".format(pathstr))
+        self.editor_wv.eval("addonAnno_changeSrc('{}')".format(pathstr))
 
     def ask_on_close(self, evt):
-        opts = [
-            "Cancel",
-            "Discard",
-            "Save"
-        ]
+        opts = ["Cancel", "Discard", "Save"]
         diag = askUserDialog("Discard Changes?", opts, parent=self)
         diag.setDefault(0)
         ret = diag.run()
