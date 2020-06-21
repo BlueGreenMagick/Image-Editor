@@ -105,7 +105,6 @@ class AnnotateDialog(QDialog):
     def reset(self):
         self.load_img()
 
-
     def on_bridge_cmd(self, cmd):
         if cmd == "img_src":
             if not self.create_new:
@@ -130,7 +129,9 @@ Please report the issue in this addon's github https:github.com/bluegreenmagick/
 Src1: {name1}
 Src2: {name2}
 Note field content: {fld}
-""".format(name1=src, name2=self.image_src, fld=fld_txt)
+""".format(
+                    name1=src, name2=self.image_src, fld=fld_txt
+                )
                 showText(err_msg, parent=self.editor.widget)
 
                 self.close_queued = True
@@ -170,15 +171,19 @@ Note field content: {fld}
         image_path = self.image_path.resolve().as_posix()
         img_name = image_path.split("/collection.media/")[-1]
         desired_name = ".".join(img_name.split(".")[:-1]) + ".svg"
+        # remove whitespace and double quote as it messes with replace_all_img_src
+        desired_name = desired_name.replace(" ", "").replace('"',"")
+        if not desired_name:
+            desired_name = "blank"
         new_name = mw.col.media.write_data(desired_name, svg_str.encode("utf-8"))
         self.replace_img_src(new_name)
 
         if self.close_queued:
             self.close()
 
-    def replace_img_src(self, path):
-        pathstr = base64.b64encode(str(path).encode("utf-8")).decode("ascii")
-        self.editor_wv.eval("addonAnno_changeSrc('{}')".format(pathstr))
+    def replace_img_src(self, name: str):
+        namestr = base64.b64encode(str(name).encode("utf-8")).decode("ascii")
+        self.editor_wv.eval("addonAnno_changeSrc('{}')".format(namestr))
 
     def ask_on_close(self, evt):
         opts = ["Cancel", "Discard", "Save"]
@@ -192,3 +197,37 @@ Note field content: {fld}
         elif ret == opts[2]:
             self.save()
             evt.ignore()
+
+    def replace_all_img_src(self, orig_name: str, new_name: str):
+
+        orig_name = re.escape(orig_name)
+        new_name = re.escape(new_name)
+
+        n = mw.col.db.list("select id from notes")
+
+        # src element quoted case
+        reg1 = r"""(?P<first><img[^>]* src=)(?:"{name}")|(?:'{name}')(?P<second>[^>]*>)""".format(
+            name=orig_name
+        )
+        # unquoted case
+        reg2 = r"""(?P<first><img[^>]* src=){name}(?P<second>(?: [^>]*>)|>)""".format(
+            name=orig_name
+        )
+        img_regs = [reg1]
+        # new_name cannot have whitespace so skip check
+        if " " not in orig_name:
+            img_regs.append(reg2)
+        # new_name cannot have double quote either
+        repl = """${first}"%s"${second}""" % new_name
+
+        for reg in img_regs:
+            replaced_cnt = mw.col.backend.find_and_replace(
+                nids=n,
+                search=reg,
+                replacement=repl,
+                regex=True,
+                match_case=False,
+                field_name=None,
+            )
+        return replaced_cnt
+
