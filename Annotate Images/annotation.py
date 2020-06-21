@@ -42,6 +42,7 @@ class myWebView(AnkiWebView):
 class AnnotateDialog(QDialog):
     def __init__(self, editor, name, path="", src="", new_image=False):
         QDialog.__init__(self, editor.widget, Qt.Window)
+        # Compatibility: 2.1.0+
         mw.setupDialogGC(self)
         self.editor_wv = editor.web
         self.editor = editor
@@ -152,7 +153,7 @@ Note field content: {fld}
 
                 self.close_queued = True
                 self.close()
-
+        # Compatibility: 2.1.0+
         self.editor_wv.evalWithCallback("addonAnno_getSrc()", check_same_image_selected)
 
     def load_img(self):
@@ -175,9 +176,13 @@ Note field content: {fld}
 
     def create_svg(self, svg_str):
         "When creating an image from nothing"
-
-        new_name = mw.col.media.write_data("svg_drawing.svg", svg_str.encode("utf-8"))
+        # Compatibility: 2.1.0+
+        try:
+            new_name = mw.col.media.write_data("svg_drawing.svg", svg_str.encode("utf-8"))
+        except:
+            new_name = mw.col.media.writeData("svg_drawing.svg", svg_str.encode("utf-8"))
         img_el = '"<img src=\\"{}\\">"'.format(new_name)
+        # Compatilibility: 2.1.0+
         self.editor_wv.eval("insertHtmlRemovingInitialBR({})".format(img_el))
         self.new_image = False
         self.image_path = Path(mw.col.media.dir()) / new_name
@@ -212,9 +217,11 @@ Note field content: {fld}
 
     def replace_img_src(self, name: str):
         namestr = base64.b64encode(str(name).encode("utf-8")).decode("ascii")
+        # Compatibility: 2.1.0+
         self.editor_wv.eval("addonAnno_changeSrc('{}')".format(namestr))
 
     def ask_on_close(self, evt):
+        # Compatibility: 2.1.0+
         opts = ["Cancel", "Discard", "Save"]
         diag = askUserDialog("Discard Changes?", opts, parent=self)
         diag.setDefault(0)
@@ -228,6 +235,8 @@ Note field content: {fld}
             evt.ignore()
     
     def replace_all_img_src(self, orig_name: str, new_name: str):
+        # Only run if mw.col.backend.find_and_replace exist (2.1.27+)
+
         browser = aqt.dialogs._dialogs["Browser"][1]
         if browser:
             browser.model.beginReset()
@@ -238,6 +247,7 @@ Note field content: {fld}
 
     def _replace_all_img_src(self, orig_name: str, new_name: str):
         "new_name doesn't have whitespace, dollar sign, nor double quote"
+        # Only run if mw.col.backend.find_and_replace exist (2.1.27+)
 
         orig_name = re.escape(orig_name)
         new_name = new_name

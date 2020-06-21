@@ -24,6 +24,7 @@ def add_context_menu_action(wv: EditorWebView, m: QMenu):
     url = context_data.mediaUrl()
     image_name = url.fileName()
     # Using url.path() doesn't return the absolute path
+    # Conpatibility: 2.1.0+
     image_path = Path(mw.col.media.dir()) / image_name
     if url.isValid() and image_path.is_file():
         a = m.addAction("Edit Image")
@@ -38,6 +39,7 @@ def insert_js(web_content, context):
 def setup_editor_buttons(btns, editor):
     hotkey = "Ctrl + Shift + I"
     icon = os.path.join(ICONS_PATH, "draw.svg")
+    # Compatibility: 2.1.0+
     b = editor.addButton(icon, "Draw Image",
                          lambda o=editor: open_annotate_window(o, new_image = True),
                          tip=f"({hotkey})",
