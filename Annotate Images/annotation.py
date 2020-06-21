@@ -9,7 +9,7 @@ from aqt.qt import *
 from aqt.webview import AnkiWebView, AnkiWebPage
 from aqt.utils import tooltip, showText, askUserDialog
 
-from .utils import load_geom, save_geom
+from .utils import load_geom, save_geom, get_config, set_config, checked
 
 method_draw_path = os.path.join(
     os.path.dirname(__file__), "web", "Method-Draw", "editor", "index.html"
@@ -70,6 +70,10 @@ class AnnotateDialog(QDialog):
         self.web.set_bridge_command(self.on_bridge_cmd, self)
         mainLayout.addWidget(self.web, stretch=1)
 
+        replaceAll = QCheckBox("Replace All")
+        ch = get_config("replace_all", hidden=True, notexist=False)
+        replaceAll.setCheckState(checked(ch))
+        replaceAll.stateChanged.connect(self.check_changed)
         okButton = QPushButton("Save")
         okButton.clicked.connect(self.save)
         cancelButton = QPushButton("Discard")
@@ -79,6 +83,7 @@ class AnnotateDialog(QDialog):
 
         btnLayout = QHBoxLayout()
         btnLayout.addStretch(1)
+        btnLayout.addWidget(replaceAll)
         btnLayout.addWidget(okButton)
         btnLayout.addWidget(cancelButton)
         btnLayout.addWidget(resetButton)
@@ -93,6 +98,10 @@ class AnnotateDialog(QDialog):
         if geom:
             self.restoreGeometry(geom)
         self.show()
+
+    def check_changed(self, state: int):
+        set_config("replace_all", bool(state), hidden=True)
+
 
     def discard(self):
         self.close_queued = True
