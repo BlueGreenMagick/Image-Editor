@@ -1,9 +1,11 @@
 import os
 import sys
 import base64
+import re
 from pathlib import Path
 from threading import Timer
 
+import aqt
 from aqt import mw
 from aqt.qt import *
 from aqt.webview import AnkiWebView, AnkiWebPage
@@ -38,13 +40,14 @@ class myWebView(AnkiWebView):
 
 
 class AnnotateDialog(QDialog):
-    def __init__(self, editor, image_path="", image_src="", new_image=False):
+    def __init__(self, editor, name, path="", src="", new_image=False):
         QDialog.__init__(self, editor.widget, Qt.Window)
         mw.setupDialogGC(self)
         self.editor_wv = editor.web
         self.editor = editor
-        self.image_path = image_path
-        self.image_src = image_src
+        self.image_name = name
+        self.image_path = path
+        self.image_src = src
         self.create_new = new_image
         self.close_queued = False
         self.check_editor_image_selected()
@@ -70,27 +73,31 @@ class AnnotateDialog(QDialog):
         self.web.set_bridge_command(self.on_bridge_cmd, self)
         mainLayout.addWidget(self.web, stretch=1)
 
-        replaceAll = QCheckBox("Replace All")
-        ch = get_config("replace_all", hidden=True, notexist=False)
-        replaceAll.setCheckState(checked(ch))
-        replaceAll.stateChanged.connect(self.check_changed)
-        okButton = QPushButton("Save")
-        okButton.clicked.connect(self.save)
-        cancelButton = QPushButton("Discard")
-        cancelButton.clicked.connect(self.discard)
-        resetButton = QPushButton("Reset")
-        resetButton.clicked.connect(self.reset)
-
         btnLayout = QHBoxLayout()
         btnLayout.addStretch(1)
-        btnLayout.addWidget(replaceAll)
+
+        if "find_and_replace" in dir(mw.col.backend):
+            # 2.1.27+
+            replaceAll = QCheckBox("Replace All")
+            self.replaceAll = replaceAll
+            ch = get_config("replace_all", hidden=True, notexist=False)
+            replaceAll.setCheckState(checked(ch))
+            replaceAll.stateChanged.connect(self.check_changed)
+            btnLayout.addWidget(replaceAll)
+
+        okButton = QPushButton("Save")
+        okButton.clicked.connect(self.save)
         btnLayout.addWidget(okButton)
+        cancelButton = QPushButton("Discard")
+        cancelButton.clicked.connect(self.discard)
         btnLayout.addWidget(cancelButton)
+        resetButton = QPushButton("Reset")
+        resetButton.clicked.connect(self.reset)
         btnLayout.addWidget(resetButton)
+
         mainLayout.addLayout(btnLayout)
 
         self.setWindowTitle("Annotate Image")
-
         self.setMinimumWidth(100)
         self.setMinimumHeight(100)
         self.setGeometry(0, 0, 640, 640)
@@ -167,6 +174,8 @@ Note field content: {fld}
         self.web.eval("ankiAddonSetImg('{}', '{}')".format(img_data, img_format))
 
     def create_svg(self, svg_str):
+        "When creating an image from nothing"
+
         new_name = mw.col.media.write_data("svg_drawing.svg", svg_str.encode("utf-8"))
         img_el = '"<img src=\\"{}\\">"'.format(new_name)
         self.editor_wv.eval("insertHtmlRemovingInitialBR({})".format(img_el))
@@ -177,15 +186,26 @@ Note field content: {fld}
             self.close()
 
     def save_svg(self, svg_str):
+        "When editing existing image"
+
         image_path = self.image_path.resolve().as_posix()
-        img_name = image_path.split("/collection.media/")[-1]
-        desired_name = ".".join(img_name.split(".")[:-1]) + ".svg"
+        img_name = self.image_name
+        desired_name = ".".join(img_name.split(".")[:-1])
+        desired_name = desired_name[:15] if len(desired_name) > 15 else desired_name
+        desired_name += ".svg"
         # remove whitespace and double quote as it messes with replace_all_img_src
-        desired_name = desired_name.replace(" ", "").replace('"',"")
+        desired_name = desired_name.replace(" ", "").replace('"',"").replace("$", "")
         if not desired_name:
             desired_name = "blank"
-        new_name = mw.col.media.write_data(desired_name, svg_str.encode("utf-8"))
-        self.replace_img_src(new_name)
+        # Compatibility: 2.1.0+
+        try:
+            new_name = mw.col.media.write_data(desired_name, svg_str.encode("utf-8"))
+        except:
+            new_name = mw.col.media.writeData(desired_name, svg_str.encode("utf-8"))
+        if self.replaceAll.checkState():
+            self.editor.saveNow(lambda s=self, i=img_name, n=new_name: s.replace_all_img_src(i, n))
+        else:
+            self.replace_img_src(new_name)
 
         if self.close_queued:
             self.close()
@@ -206,12 +226,23 @@ Note field content: {fld}
         elif ret == opts[2]:
             self.save()
             evt.ignore()
-
+    
     def replace_all_img_src(self, orig_name: str, new_name: str):
+        browser = aqt.dialogs._dialogs["Browser"][1]
+        if browser:
+            browser.model.beginReset()
+        self._replace_all_img_src(orig_name, new_name)
+        mw.requireReset()
+        if browser:
+            browser.model.endReset()
+
+    def _replace_all_img_src(self, orig_name: str, new_name: str):
+        "new_name doesn't have whitespace, dollar sign, nor double quote"
 
         orig_name = re.escape(orig_name)
-        new_name = re.escape(new_name)
+        new_name = new_name
 
+        # Compatibility: 2.1.0+
         n = mw.col.db.list("select id from notes")
 
         # src element quoted case
@@ -223,13 +254,13 @@ Note field content: {fld}
             name=orig_name
         )
         img_regs = [reg1]
-        # new_name cannot have whitespace so skip check
         if " " not in orig_name:
             img_regs.append(reg2)
-        # new_name cannot have double quote either
+        
         repl = """${first}"%s"${second}""" % new_name
 
         for reg in img_regs:
+            # Compatibility: 2.1.27+ 
             replaced_cnt = mw.col.backend.find_and_replace(
                 nids=n,
                 search=reg,
