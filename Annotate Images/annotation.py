@@ -26,6 +26,9 @@ MIME_TYPE = {
     "ico": "image/vnd.microsoft.icon",
     "svg": "image/svg+xml",
 }
+COMPAT = {
+    "replace_all": "find_and_replace" in dir(mw.col.backend)
+}
 
 
 class myPage(AnkiWebPage):
@@ -77,7 +80,7 @@ class AnnotateDialog(QDialog):
         btnLayout = QHBoxLayout()
         btnLayout.addStretch(1)
 
-        if "find_and_replace" in dir(mw.col.backend):
+        if COMPAT["replace_all"]:
             # 2.1.27+
             replaceAll = QCheckBox("Replace All")
             self.replaceAll = replaceAll
@@ -207,7 +210,8 @@ Note field content: {fld}
             new_name = mw.col.media.write_data(desired_name, svg_str.encode("utf-8"))
         except:
             new_name = mw.col.media.writeData(desired_name, svg_str.encode("utf-8"))
-        if self.replaceAll.checkState():
+            
+        if COMPAT["replace_all"] and self.replaceAll.checkState():
             self.editor.saveNow(lambda s=self, i=img_name, n=new_name: s.replace_all_img_src(i, n))
         else:
             self.replace_img_src(new_name)
