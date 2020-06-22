@@ -48,7 +48,11 @@ def setup_editor_buttons(btns, editor):
     btns.append(b)
     return btns
 
+def on_config():
+    tooltip("This addon does not have user-editable config")
+
 mw.addonManager.setWebExports(__name__, r"web/editor.js")
+mw.addonManager.setConfigAction(__name__, on_config)
 addHook("EditorWebView.contextMenuEvent", add_context_menu_action)
 addHook('setupEditorButtons', setup_editor_buttons)
 gui_hooks.webview_will_set_content.append(insert_js)
