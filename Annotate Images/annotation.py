@@ -11,6 +11,7 @@ from aqt.qt import *
 from aqt.webview import AnkiWebView, AnkiWebPage
 from aqt.utils import tooltip, showText, askUserDialog
 
+from . import COMPAT
 from .utils import load_geom, save_geom, get_config, set_config, checked
 
 method_draw_path = os.path.join(
@@ -26,10 +27,6 @@ MIME_TYPE = {
     "ico": "image/vnd.microsoft.icon",
     "svg": "image/svg+xml",
 }
-COMPAT = {
-    "replace_all": "find_and_replace" in dir(mw.col.backend)
-}
-
 
 class myPage(AnkiWebPage):
     def acceptNavigationRequest(self, url, navType, isMainFrame):
@@ -80,7 +77,7 @@ class AnnotateDialog(QDialog):
         btnLayout = QHBoxLayout()
         btnLayout.addStretch(1)
 
-        if COMPAT["replace_all"]:
+        if COMPAT["find_replace"]:
             # 2.1.27+
             replaceAll = QCheckBox("Replace All")
             self.replaceAll = replaceAll
@@ -180,9 +177,9 @@ Note field content: {fld}
     def create_svg(self, svg_str):
         "When creating an image from nothing"
         # Compatibility: 2.1.0+
-        try:
+        if COMPAT["write_data"]:
             new_name = mw.col.media.write_data("svg_drawing.svg", svg_str.encode("utf-8"))
-        except:
+        else:
             new_name = mw.col.media.writeData("svg_drawing.svg", svg_str.encode("utf-8"))
         img_el = '"<img src=\\"{}\\">"'.format(new_name)
         # Compatilibility: 2.1.0+
@@ -206,12 +203,12 @@ Note field content: {fld}
         if not desired_name:
             desired_name = "blank"
         # Compatibility: 2.1.0+
-        try:
+        if COMPAT["write_data"]:
             new_name = mw.col.media.write_data(desired_name, svg_str.encode("utf-8"))
-        except:
+        else:
             new_name = mw.col.media.writeData(desired_name, svg_str.encode("utf-8"))
             
-        if COMPAT["replace_all"] and self.replaceAll.checkState():
+        if COMPAT["find_replace"] and self.replaceAll.checkState():
             self.editor.saveNow(lambda s=self, i=img_name, n=new_name: s.replace_all_img_src(i, n))
         else:
             self.replace_img_src(new_name)
