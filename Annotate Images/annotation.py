@@ -5,6 +5,7 @@ import re
 from pathlib import Path
 from threading import Timer
 
+import anki.find
 import aqt
 from aqt import mw
 from aqt.qt import *
@@ -77,14 +78,12 @@ class AnnotateDialog(QDialog):
         btnLayout = QHBoxLayout()
         btnLayout.addStretch(1)
 
-        if COMPAT["find_replace"]:
-            # 2.1.27+
-            replaceAll = QCheckBox("Replace All")
-            self.replaceAll = replaceAll
-            ch = get_config("replace_all", hidden=True, notexist=False)
-            replaceAll.setCheckState(checked(ch))
-            replaceAll.stateChanged.connect(self.check_changed)
-            btnLayout.addWidget(replaceAll)
+        replaceAll = QCheckBox("Replace All")
+        self.replaceAll = replaceAll
+        ch = get_config("replace_all", hidden=True, notexist=False)
+        replaceAll.setCheckState(checked(ch))
+        replaceAll.stateChanged.connect(self.check_changed)
+        btnLayout.addWidget(replaceAll)
 
         okButton = QPushButton("Save")
         okButton.clicked.connect(self.save)
@@ -208,7 +207,7 @@ Note field content: {fld}
         else:
             new_name = mw.col.media.writeData(desired_name, svg_str.encode("utf-8"))
             
-        if COMPAT["find_replace"] and self.replaceAll.checkState():
+        if self.replaceAll.checkState():
             self.editor.saveNow(lambda s=self, i=img_name, n=new_name: s.replace_all_img_src(i, n))
         else:
             self.replace_img_src(new_name)
@@ -248,8 +247,7 @@ Note field content: {fld}
 
     def _replace_all_img_src(self, orig_name: str, new_name: str):
         "new_name doesn't have whitespace, dollar sign, nor double quote"
-        # Only run if mw.col.backend.find_and_replace exist (2.1.27+)
-
+        
         orig_name = re.escape(orig_name)
         new_name = new_name
 
@@ -268,17 +266,22 @@ Note field content: {fld}
         if " " not in orig_name:
             img_regs.append(reg2)
         
-        repl = """${first}"%s"${second}""" % new_name
+        if COMPAT["find_replace"]:
+            repl = """${first}"%s"${second}""" % new_name
+        else:
+            repl = """\\g<first>"%s"\\g<second>""" % new_name
 
         for reg in img_regs:
-            # Compatibility: 2.1.27+ 
-            replaced_cnt = mw.col.backend.find_and_replace(
-                nids=n,
-                search=reg,
-                replacement=repl,
-                regex=True,
-                match_case=False,
-                field_name=None,
-            )
+            if COMPAT["find_replace"]:
+                replaced_cnt = mw.col.backend.find_and_replace(
+                    nids=n,
+                    search=reg,
+                    replacement=repl,
+                    regex=True,
+                    match_case=False,
+                    field_name=None,
+                )
+            else:
+                replaced_cnt = anki.find.findReplace(col=mw.col, nids=n, src=reg, dst=repl, regex=True, fold=False)
         return replaced_cnt
 
