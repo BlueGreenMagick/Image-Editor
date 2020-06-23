@@ -41,7 +41,7 @@ class myWebView(AnkiWebView):
 
 
 class AnnotateDialog(QDialog):
-    def __init__(self, editor, name, path="", src="", new_image=False):
+    def __init__(self, editor, name, path="", src="", create_new=False):
         QDialog.__init__(self, editor.widget, Qt.Window)
         # Compatibility: 2.1.0+
         mw.setupDialogGC(self)
@@ -50,9 +50,10 @@ class AnnotateDialog(QDialog):
         self.image_name = name
         self.image_path = path
         self.image_src = src
-        self.create_new = new_image
+        self.create_new = create_new
         self.close_queued = False
-        self.check_editor_image_selected()
+        if not create_new:
+            self.check_editor_image_selected()
         self.setupUI()
 
     def closeEvent(self, evt):
@@ -182,7 +183,7 @@ Note field content: {fld}
         img_el = '"<img src=\\"{}\\">"'.format(new_name)
         # Compatilibility: 2.1.0+
         self.editor_wv.eval("insertHtmlRemovingInitialBR({})".format(img_el))
-        self.new_image = False
+        self.create_new = False
         self.image_path = Path(mw.col.media.dir()) / new_name
         tooltip("Image Created", parent=self.editor.widget)
         if self.close_queued:

@@ -16,8 +16,8 @@ ADDON_PACKAGE = mw.addonManager.addonFromModule(__name__)
 ICONS_PATH = os.path.join(os.path.dirname(__file__), "icons")
 
 
-def open_annotate_window(editor, name = "", path = "", src = "", new_image = False):
-    mw.annodial = AnnotateDialog(editor, name = name, path = path, src = src, new_image = new_image)
+def open_annotate_window(editor, name = "", path = "", src = "", create_new = False):
+    mw.annodial = AnnotateDialog(editor, name = name, path = path, src = src, create_new = create_new)
 
 def add_context_menu_action(wv: EditorWebView, m: QMenu):
     context_data = wv.page().contextMenuData()
@@ -41,7 +41,7 @@ def setup_editor_buttons(btns, editor):
     icon = os.path.join(ICONS_PATH, "draw.svg")
     # Compatibility: 2.1.0+
     b = editor.addButton(icon, "Draw Image",
-                         lambda o=editor: open_annotate_window(o, new_image = True),
+                         lambda o=editor: open_annotate_window(o, create_new = True),
                          tip=f"({hotkey})",
                          keys=hotkey, disables=True)
 
