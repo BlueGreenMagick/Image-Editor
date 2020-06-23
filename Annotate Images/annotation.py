@@ -133,7 +133,6 @@ class AnnotateDialog(QDialog):
             else:
                 svg_str = cmd[len("svg_save:") :]
                 self.save_svg(svg_str)
-            tooltip("Image Saved", parent=self.editor.widget)
 
     def check_editor_image_selected(self):
         def check_same_image_selected(src):
@@ -185,7 +184,7 @@ Note field content: {fld}
         self.editor_wv.eval("insertHtmlRemovingInitialBR({})".format(img_el))
         self.new_image = False
         self.image_path = Path(mw.col.media.dir()) / new_name
-
+        tooltip("Image Created", parent=self.editor.widget)
         if self.close_queued:
             self.close()
 
@@ -211,6 +210,7 @@ Note field content: {fld}
             self.editor.saveNow(lambda s=self, i=img_name, n=new_name: s.replace_all_img_src(i, n))
         else:
             self.replace_img_src(new_name)
+            tooltip("Image Saved", parent=self.editor.widget)
 
         if self.close_queued:
             self.close()
@@ -240,10 +240,11 @@ Note field content: {fld}
         browser = aqt.dialogs._dialogs["Browser"][1]
         if browser:
             browser.model.beginReset()
-        self._replace_all_img_src(orig_name, new_name)
+        cnt = self._replace_all_img_src(orig_name, new_name)
         mw.requireReset()
         if browser:
             browser.model.endReset()
+        tooltip(f"Images across {cnt} note(s) modified", parent=self.editor.widget)
 
     def _replace_all_img_src(self, orig_name: str, new_name: str):
         "new_name doesn't have whitespace, dollar sign, nor double quote"
