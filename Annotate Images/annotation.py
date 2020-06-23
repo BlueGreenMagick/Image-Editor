@@ -272,9 +272,10 @@ Note field content: {fld}
         else:
             repl = """\\g<first>"%s"\\g<second>""" % new_name
 
+        replaced_cnt = 0
         for reg in img_regs:
             if COMPAT["find_replace"]:
-                replaced_cnt = mw.col.backend.find_and_replace(
+                replaced_cnt += mw.col.backend.find_and_replace(
                     nids=n,
                     search=reg,
                     replacement=repl,
@@ -283,6 +284,6 @@ Note field content: {fld}
                     field_name=None,
                 )
             else:
-                replaced_cnt = anki.find.findReplace(col=mw.col, nids=n, src=reg, dst=repl, regex=True, fold=False)
+                replaced_cnt += anki.find.findReplace(col=mw.col, nids=n, src=reg, dst=repl, regex=True, fold=False)
         return replaced_cnt
 
