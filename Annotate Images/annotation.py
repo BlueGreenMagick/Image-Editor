@@ -252,7 +252,7 @@ Note field content: {fld}
         new_name = new_name
 
         # Compatibility: 2.1.0+
-        n = mw.col.db.list("select id from notes")
+        n = mw.col.findNotes("<img")
 
         # src element quoted case
         reg1 = r"""(?P<first><img[^>]* src=)(?:"{name}")|(?:'{name}')(?P<second>[^>]*>)""".format(
