@@ -48,6 +48,10 @@ def setup_editor_buttons(btns, editor):
     btns.append(b)
     return btns
 
+def on_editor_note_load(js: str, note: anki.notes.Note, editor: Editor):
+    js += "\naddonAnno.addListener();"
+    return js
+
 def on_config():
     tooltip("This addon does not have user-editable config")
 
@@ -56,3 +60,4 @@ mw.addonManager.setConfigAction(__name__, on_config)
 addHook("EditorWebView.contextMenuEvent", add_context_menu_action)
 addHook('setupEditorButtons', setup_editor_buttons)
 gui_hooks.webview_will_set_content.append(insert_js)
+gui_hooks.editor_will_load_note.append(on_editor_note_load)  # 2.1.24+
