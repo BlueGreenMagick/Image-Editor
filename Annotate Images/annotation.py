@@ -29,6 +29,7 @@ MIME_TYPE = {
     "svg": "image/svg+xml",
 }
 
+
 class myPage(AnkiWebPage):
     def acceptNavigationRequest(self, url, navType, isMainFrame):
         "Needed so the link don't get opened in external browser"
@@ -110,7 +111,6 @@ class AnnotateDialog(QDialog):
     def check_changed(self, state: int):
         set_config("replace_all", bool(state), hidden=True)
 
-
     def discard(self):
         self.close_queued = True
         self.close()
@@ -129,10 +129,10 @@ class AnnotateDialog(QDialog):
 
         elif cmd.startswith("svg_save:"):
             if self.create_new:
-                svg_str = cmd[len("svg_save:") :]
+                svg_str = cmd[len("svg_save:"):]
                 self.create_svg(svg_str)
             else:
-                svg_str = cmd[len("svg_save:") :]
+                svg_str = cmd[len("svg_save:"):]
                 self.save_svg(svg_str)
 
     def check_editor_image_selected(self):
@@ -153,7 +153,8 @@ Note field content: {fld}
                 self.close_queued = True
                 self.close()
         # Compatibility: 2.1.0+
-        self.editor_wv.evalWithCallback("addonAnno_getSrc()", check_same_image_selected)
+        self.editor_wv.evalWithCallback(
+            "addonAnno.getSrc()", check_same_image_selected)
 
     def load_img(self):
         img_path = self.image_path
@@ -171,15 +172,18 @@ Note field content: {fld}
             mime_str = MIME_TYPE[img_format]
             encoded_img_data = base64.b64encode(img_path.read_bytes()).decode()
             img_data = "data:{};base64,{}".format(mime_str, encoded_img_data)
-        self.web.eval("ankiAddonSetImg('{}', '{}')".format(img_data, img_format))
+        self.web.eval("ankiAddonSetImg('{}', '{}')".format(
+            img_data, img_format))
 
     def create_svg(self, svg_str):
         "When creating an image from nothing"
         # Compatibility: 2.1.0+
         if COMPAT["write_data"]:
-            new_name = mw.col.media.write_data("svg_drawing.svg", svg_str.encode("utf-8"))
+            new_name = mw.col.media.write_data(
+                "svg_drawing.svg", svg_str.encode("utf-8"))
         else:
-            new_name = mw.col.media.writeData("svg_drawing.svg", svg_str.encode("utf-8"))
+            new_name = mw.col.media.writeData(
+                "svg_drawing.svg", svg_str.encode("utf-8"))
         img_el = '"<img src=\\"{}\\">"'.format(new_name)
         # Compatilibility: 2.1.0+
         self.editor_wv.eval("insertHtmlRemovingInitialBR({})".format(img_el))
@@ -195,20 +199,25 @@ Note field content: {fld}
         image_path = self.image_path.resolve().as_posix()
         img_name = self.image_name
         desired_name = ".".join(img_name.split(".")[:-1])
-        desired_name = desired_name[:15] if len(desired_name) > 15 else desired_name
+        desired_name = desired_name[:15] if len(
+            desired_name) > 15 else desired_name
         desired_name += ".svg"
         # remove whitespace and double quote as it messes with replace_all_img_src
-        desired_name = desired_name.replace(" ", "").replace('"',"").replace("$", "")
+        desired_name = desired_name.replace(
+            " ", "").replace('"', "").replace("$", "")
         if not desired_name:
             desired_name = "blank"
         # Compatibility: 2.1.0+
         if COMPAT["write_data"]:
-            new_name = mw.col.media.write_data(desired_name, svg_str.encode("utf-8"))
+            new_name = mw.col.media.write_data(
+                desired_name, svg_str.encode("utf-8"))
         else:
-            new_name = mw.col.media.writeData(desired_name, svg_str.encode("utf-8"))
-            
+            new_name = mw.col.media.writeData(
+                desired_name, svg_str.encode("utf-8"))
+
         if self.replaceAll.checkState():
-            self.editor.saveNow(lambda s=self, i=img_name, n=new_name: s.replace_all_img_src(i, n))
+            self.editor.saveNow(lambda s=self, i=img_name,
+                                n=new_name: s.replace_all_img_src(i, n))
         else:
             self.replace_img_src(new_name)
             tooltip("Image Saved", parent=self.editor.widget)
@@ -219,7 +228,7 @@ Note field content: {fld}
     def replace_img_src(self, name: str):
         namestr = base64.b64encode(str(name).encode("utf-8")).decode("ascii")
         # Compatibility: 2.1.0+
-        self.editor_wv.eval("addonAnno_changeSrc('{}')".format(namestr))
+        self.editor_wv.eval("addonAnno.changeSrc('{}')".format(namestr))
 
     def ask_on_close(self, evt):
         # Compatibility: 2.1.0+
@@ -234,7 +243,7 @@ Note field content: {fld}
         elif ret == opts[2]:
             self.save()
             evt.ignore()
-    
+
     def replace_all_img_src(self, orig_name: str, new_name: str):
         # Only run if mw.col.backend.find_and_replace exist (2.1.27+)
 
@@ -245,11 +254,12 @@ Note field content: {fld}
         mw.requireReset()
         if browser:
             browser.model.endReset()
-        tooltip(f"Images across {cnt} note(s) modified", parent=self.editor.widget)
+        tooltip(f"Images across {cnt} note(s) modified",
+                parent=self.editor.widget)
 
     def _replace_all_img_src(self, orig_name: str, new_name: str):
         "new_name doesn't have whitespace, dollar sign, nor double quote"
-        
+
         orig_name = re.escape(orig_name)
         new_name = new_name
 
@@ -267,7 +277,7 @@ Note field content: {fld}
         img_regs = [reg1]
         if " " not in orig_name:
             img_regs.append(reg2)
-        
+
         if COMPAT["find_replace"]:
             repl = """${first}"%s"${second}""" % new_name
         else:
@@ -285,6 +295,6 @@ Note field content: {fld}
                     field_name=None,
                 )
             else:
-                replaced_cnt += anki.find.findReplace(col=mw.col, nids=n, src=reg, dst=repl, regex=True, fold=False)
+                replaced_cnt += anki.find.findReplace(
+                    col=mw.col, nids=n, src=reg, dst=repl, regex=True, fold=False)
         return replaced_cnt
-

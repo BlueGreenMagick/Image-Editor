@@ -1,6 +1,7 @@
 import os
 from pathlib import Path
 
+import anki
 from anki import version as ANKIVER
 from anki.hooks import addHook
 from aqt import mw
@@ -16,8 +17,10 @@ ADDON_PACKAGE = mw.addonManager.addonFromModule(__name__)
 ICONS_PATH = os.path.join(os.path.dirname(__file__), "icons")
 
 
-def open_annotate_window(editor, name = "", path = "", src = "", create_new = False):
-    mw.annodial = AnnotateDialog(editor, name = name, path = path, src = src, create_new = create_new)
+def open_annotate_window(editor, name="", path="", src="", create_new=False):
+    mw.annodial = AnnotateDialog(
+        editor, name=name, path=path, src=src, create_new=create_new)
+
 
 def add_context_menu_action(wv: EditorWebView, m: QMenu):
     context_data = wv.page().contextMenuData()
@@ -28,7 +31,8 @@ def add_context_menu_action(wv: EditorWebView, m: QMenu):
     image_path = Path(mw.col.media.dir()) / image_name
     if url.isValid() and image_path.is_file():
         a = m.addAction("Edit Image")
-        a.triggered.connect(lambda _, path=image_path, nm=image_name: open_annotate_window(wv.editor, name = nm, path=path, src=url.toString()))
+        a.triggered.connect(lambda _, path=image_path, nm=image_name: open_annotate_window(
+            wv.editor, name=nm, path=path, src=url.toString()))
 
 
 def insert_js(web_content, context):
@@ -36,24 +40,29 @@ def insert_js(web_content, context):
         return
     web_content.js.append(f"/_addons/{ADDON_PACKAGE}/web/editor.js")
 
+
 def setup_editor_buttons(btns, editor):
     hotkey = "Ctrl + Shift + I"
     icon = os.path.join(ICONS_PATH, "draw.svg")
     # Compatibility: 2.1.0+
     b = editor.addButton(icon, "Draw Image",
-                         lambda o=editor: open_annotate_window(o, create_new = True),
+                         lambda o=editor: open_annotate_window(
+                             o, create_new=True),
                          tip=f"({hotkey})",
                          keys=hotkey, disables=True)
 
     btns.append(b)
     return btns
 
+
 def on_editor_note_load(js: str, note: anki.notes.Note, editor: Editor):
     js += "\naddonAnno.addListener();"
     return js
 
+
 def on_config():
     tooltip("This addon does not have user-editable config")
+
 
 mw.addonManager.setWebExports(__name__, r"web/editor.js")
 mw.addonManager.setConfigAction(__name__, on_config)
