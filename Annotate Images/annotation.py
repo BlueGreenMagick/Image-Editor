@@ -136,25 +136,13 @@ class AnnotateDialog(QDialog):
                 self.save_svg(svg_str)
 
     def check_editor_image_selected(self):
-        def check_same_image_selected(src):
-            if src != self.image_src:
-                fld_txt = self.editor.note.fields[self.editor.currentField]
-                err_msg = """Image Editor Error: Unmatching image src\n
-Please report the issue in this addon's github https:github.com/bluegreenmagick/image-editor
-
-Src1: {name1}
-Src2: {name2}
-Note field content: {fld}
-""".format(
-                    name1=src, name2=self.image_src, fld=fld_txt
-                )
-                showText(err_msg, parent=self.editor.widget)
-
+        def check_image_selected(selected):
+            if selected == False:
                 self.close_queued = True
                 self.close()
         # Compatibility: 2.1.0+
         self.editor_wv.evalWithCallback(
-            "addonAnno.getSrc()", check_same_image_selected)
+            "addonAnno.imageIsSelected()", check_image_selected)
 
     def load_img(self):
         img_path = self.image_path
