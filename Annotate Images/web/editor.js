@@ -15,11 +15,18 @@
     }
   }
 
-  addonAnno.getSelFld = function () {
-    return targetEl
-  }
-  addonAnno.imageIsSelected = function () {
+  const selectedIsImage = function () {
     return targetEl.tagName === 'IMG'
+  }
+
+  const hasSingleImage = function () {
+    const field = window.getCurrentField()
+    if (!field) { return false }
+    return field.shadowRoot.querySelectorAll('img').length === 1
+  }
+
+  addonAnno.imageIsSelected = function () {
+    return selectedIsImage() || hasSingleImage()
   }
 
   addonAnno.getSrc = function () {
