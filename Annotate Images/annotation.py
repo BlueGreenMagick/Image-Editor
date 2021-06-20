@@ -106,7 +106,9 @@ class AnnotateDialog(QDialog):
         geom = load_geom("anno_dial")
         if geom:
             self.restoreGeometry(geom)
-        self.show()
+        if not self.close_queued:
+            # When image isn't selected js side
+            self.show()
 
     def check_changed(self, state: int):
         set_config("replace_all", bool(state), hidden=True)
@@ -140,6 +142,7 @@ class AnnotateDialog(QDialog):
             if selected == False:
                 self.close_queued = True
                 self.close()
+                tooltip("Image wasn't selected properly.\nPlease try again.")
         # Compatibility: 2.1.0+
         self.editor_wv.evalWithCallback(
             "addonAnno.imageIsSelected()", check_image_selected)
