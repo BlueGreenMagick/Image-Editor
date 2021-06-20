@@ -177,7 +177,8 @@ class AnnotateDialog(QDialog):
                 "svg_drawing.svg", svg_str.encode("utf-8"))
         img_el = '"<img src=\\"{}\\">"'.format(new_name)
         # Compatilibility: 2.1.0+
-        self.editor_wv.eval("insertHtmlRemovingInitialBR({})".format(img_el))
+        self.editor_wv.eval(
+            "document.execCommand('inserthtml', false, {})".format(img_el))
         self.create_new = False
         self.image_path = Path(mw.col.media.dir()) / new_name
         tooltip("Image Created", parent=self.editor.widget)
