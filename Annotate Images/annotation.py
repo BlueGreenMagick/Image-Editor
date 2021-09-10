@@ -278,7 +278,7 @@ class AnnotateDialog(QDialog):
         replaced_cnt = 0
         for reg in img_regs:
             if COMPAT["find_replace"]:
-                replaced_cnt += mw.col.backend.find_and_replace(
+                res = mw.col.backend.find_and_replace(
                     nids=n,
                     search=reg,
                     replacement=repl,
@@ -287,6 +287,10 @@ class AnnotateDialog(QDialog):
                     field_name=None,
                 )
             else:
-                replaced_cnt += anki.find.findReplace(
+                res = anki.find.findReplace(
                     col=mw.col, nids=n, src=reg, dst=repl, regex=True, fold=False)
+            if COMPAT["find_replace_cnt"]:
+                replaced_cnt += res.count
+            else:
+                replaced_cnt += res
         return replaced_cnt
