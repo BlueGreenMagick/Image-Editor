@@ -10,10 +10,10 @@ import aqt
 from aqt import mw
 from aqt.qt import *
 from aqt.webview import AnkiWebView, AnkiWebPage
-from aqt.utils import tooltip, showText, askUserDialog
+from aqt.utils import tooltip, showText, askUserDialog, restoreGeom, saveGeom
 
 from . import COMPAT
-from .utils import load_geom, save_geom, get_config, set_config, checked
+from .utils import get_config, set_config, checked
 
 method_draw_path = os.path.join(
     os.path.dirname(__file__), "web", "Method-Draw", "editor", "index.html"
@@ -59,7 +59,7 @@ class AnnotateDialog(QDialog):
 
     def closeEvent(self, evt):
         if self.close_queued:
-            save_geom(self, "anno_dial")
+            saveGeom(self, "addon_image_editor")
             del mw.annodial
             evt.accept()
         else:
@@ -103,9 +103,7 @@ class AnnotateDialog(QDialog):
         self.setMinimumWidth(100)
         self.setMinimumHeight(100)
         self.setGeometry(0, 0, 640, 640)
-        geom = load_geom("anno_dial")
-        if geom:
-            self.restoreGeometry(geom)
+        restoreGeom(self, "addon_image_editor")
         if not self.close_queued:
             # When image isn't selected js side
             self.show()
@@ -231,9 +229,11 @@ class AnnotateDialog(QDialog):
         if ret == opts[0]:
             evt.ignore()
         elif ret == opts[1]:
+            saveGeom(self, "addon_image_editor")
             evt.accept()
         elif ret == opts[2]:
             self.save()
+            saveGeom(self, "addon_image_editor")
             evt.ignore()
 
     def replace_all_img_src(self, orig_name: str, new_name: str):
