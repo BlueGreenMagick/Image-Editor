@@ -43,7 +43,7 @@ class myWebView(AnkiWebView):
 
 class AnnotateDialog(QDialog):
     def __init__(self, editor, name, path="", src="", create_new=False):
-        QDialog.__init__(self, editor.widget, Qt.Window)
+        QDialog.__init__(self, editor.widget, Qt.WindowType.Window)
         # Compatibility: 2.1.0+
         mw.setupDialogGC(self)
         self.editor_wv = editor.web

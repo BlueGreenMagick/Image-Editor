@@ -21,6 +21,6 @@ def set_config(key, val, hidden=False):
 
 def checked(ch: bool) -> Qt.CheckState:
     if ch:
-        return Qt.Checked
+        return Qt.CheckState.Checked
     else:
-        return Qt.Unchecked
+        return Qt.CheckState.Unchecked
