@@ -97,6 +97,13 @@ class AnnotateDialog(QDialog):
         resetButton.clicked.connect(self.reset)
         btnLayout.addWidget(resetButton)
 
+        okButton.setDefault(False)
+        okButton.setAutoDefault(False)
+        cancelButton.setDefault(False)
+        cancelButton.setAutoDefault(False)
+        resetButton.setDefault(False)
+        resetButton.setAutoDefault(False)
+
         mainLayout.addLayout(btnLayout)
 
         self.setWindowTitle("Annotate Image")
