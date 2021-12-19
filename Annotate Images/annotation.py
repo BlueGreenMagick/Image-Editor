@@ -237,8 +237,6 @@ class AnnotateDialog(QDialog):
             evt.ignore()
 
     def replace_all_img_src(self, orig_name: str, new_name: str):
-        # Only run if mw.col.backend.find_and_replace exist (2.1.27+)
-
         browser = aqt.dialogs._dialogs["Browser"][1]
         if browser:
             browser.model.beginReset()
@@ -278,8 +276,8 @@ class AnnotateDialog(QDialog):
         replaced_cnt = 0
         for reg in img_regs:
             if COMPAT["find_replace"]:
-                res = mw.col.backend.find_and_replace(
-                    nids=n,
+                res = mw.col.find_and_replace(
+                    note_ids=n,
                     search=reg,
                     replacement=repl,
                     regex=True,
