@@ -1,5 +1,5 @@
 (function () {
-  let targetEl = null
+  let targetEl = { tagName: "" }
   const addonAnno = {}
 
   addonAnno.addListener = function () {
