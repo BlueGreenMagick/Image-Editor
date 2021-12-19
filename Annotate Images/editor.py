@@ -7,7 +7,7 @@ from anki.hooks import addHook
 from aqt import mw
 from aqt.editor import EditorWebView, Editor
 from aqt.utils import tooltip
-from aqt.qt import QMenu
+from aqt.qt import QMenu, QT_VERSION_STR
 from aqt import gui_hooks
 from aqt.utils import showText
 
@@ -15,7 +15,7 @@ from .annotation import AnnotateDialog
 
 ADDON_PACKAGE = mw.addonManager.addonFromModule(__name__)
 ICONS_PATH = os.path.join(os.path.dirname(__file__), "icons")
-
+QT6 = QT_VERSION_STR.split(".")[0] == "6"
 
 def open_annotate_window(editor, name="", path="", src="", create_new=False):
     mw.annodial = AnnotateDialog(
@@ -23,7 +23,10 @@ def open_annotate_window(editor, name="", path="", src="", create_new=False):
 
 
 def add_context_menu_action(wv: EditorWebView, m: QMenu):
-    context_data = wv.page().contextMenuData()
+    if QT6:
+        context_data = wv.lastContextMenuRequest()
+    else:
+        context_data = wv.page().contextMenuData()
     url = context_data.mediaUrl()
     image_name = url.fileName()
     # Using url.path() doesn't return the absolute path
