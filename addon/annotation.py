@@ -212,7 +212,7 @@ class AnnotateDialog(QDialog):
             new_name = mw.col.media.writeData(
                 desired_name, svg_str.encode("utf-8"))
 
-        if self.replaceAll.checkState():
+        if self.replaceAll.checkState() == Qt.CheckState.Checked:
             self.editor.saveNow(lambda s=self, i=img_name,
                                 n=new_name: s.replace_all_img_src(i, n))
         else:
