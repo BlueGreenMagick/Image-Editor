@@ -2,6 +2,7 @@ import os
 import sys
 import base64
 import re
+import json
 from pathlib import Path
 from threading import Timer
 
@@ -156,14 +157,12 @@ class AnnotateDialog(QDialog):
             return
 
         if img_format == "svg":
-            img_data = base64.b64encode(img_path.read_text().encode("utf-8")).decode(
-                "ascii"
-            )
+            img_data = json.dumps(img_path.read_text())
         else:
             mime_str = MIME_TYPE[img_format]
             encoded_img_data = base64.b64encode(img_path.read_bytes()).decode()
-            img_data = "data:{};base64,{}".format(mime_str, encoded_img_data)
-        self.web.eval("ankiAddonSetImg('{}', '{}')".format(
+            img_data = "'data:{};base64,{}'".format(mime_str, encoded_img_data)
+        self.web.eval("ankiAddonSetImg({}, '{}')".format(
             img_data, img_format))
 
     def create_svg(self, svg_str):
