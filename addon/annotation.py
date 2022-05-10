@@ -182,8 +182,11 @@ class AnnotateDialog(QDialog):
                 "svg_drawing.svg", svg_str.encode("utf-8"))
         img_el = '"<img src=\\"{}\\">"'.format(new_name)
         # Compatilibility: 2.1.0+
-        self.editor_wv.eval(
-            "document.execCommand('inserthtml', false, {})".format(img_el))
+        write_image_script = "document.execCommand('inserthtml', false, {});".format(img_el)
+        self.editor_wv.evalWithCallback(
+            write_image_script, 
+            lambda res: not res and self.editor_wv.eval("focusField(0); setTimeout(() => {" + write_image_script + "},25)"))
+        print(self.editor.currentField)
         self.create_new = False
         self.image_path = Path(mw.col.media.dir()) / new_name
         tooltip("Image Created", parent=self.editor.widget)
