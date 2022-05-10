@@ -36,11 +36,6 @@ class myPage(AnkiWebPage):
         return True
 
 
-class myWebView(AnkiWebView):
-    def contextMenuEvent(self, evt: QContextMenuEvent) -> None:
-        return
-
-
 class AnnotateDialog(QDialog):
     def __init__(self, editor, name, path="", src="", create_new=False):
         QDialog.__init__(self, editor.widget, Qt.WindowType.Window)
