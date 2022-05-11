@@ -157,7 +157,7 @@ class AnnotateDialog(QDialog):
             return
 
         if img_format == "svg":
-            img_data = json.dumps(img_path.read_text())
+            img_data = json.dumps(img_path.read_text(encoding="utf-8"))
         else:
             mime_str = MIME_TYPE[img_format]
             encoded_img_data = base64.b64encode(img_path.read_bytes()).decode()
