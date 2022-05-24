@@ -211,22 +211,25 @@ class AnnotateDialog(QDialog):
 
         if self.replaceAll.checkState() == Qt.CheckState.Checked:
             if self.editor.addMode:
-                self.replace_img_src(new_name)
+                self.replace_img_src_webview(new_name, replace_all=True)
                 self.replace_all_img_src(img_name, new_name)
             else:
                 self.editor.saveNow(lambda s=self, i=img_name,
                                 n=new_name: s.replace_all_img_src(i, n))
         else:
-            self.replace_img_src(new_name)
+            self.replace_img_src_webview(new_name)
             tooltip("Image Saved", parent=self.editor.widget)
 
         if self.close_queued:
             self.close()
 
-    def replace_img_src(self, name: str):
+    def replace_img_src_webview(self, name: str, replace_all=False):
         namestr = base64.b64encode(str(name).encode("utf-8")).decode("ascii")
         # Compatibility: 2.1.0+
-        self.editor_wv.eval("addonAnno.changeSrc('{}')".format(namestr))
+        if replace_all:
+            self.editor_wv.eval("addonAnno.changeAllSrc('{}')".format(namestr))
+        else:
+            self.editor_wv.eval("addonAnno.changeSrc('{}')".format(namestr))
 
     def ask_on_close(self, evt):
         # Compatibility: 2.1.0+
