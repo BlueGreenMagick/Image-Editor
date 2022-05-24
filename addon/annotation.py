@@ -210,7 +210,11 @@ class AnnotateDialog(QDialog):
                 desired_name, svg_str.encode("utf-8"))
 
         if self.replaceAll.checkState() == Qt.CheckState.Checked:
-            self.editor.saveNow(lambda s=self, i=img_name,
+            if self.editor.addMode:
+                self.replace_img_src(new_name)
+                self.replace_all_img_src(img_name, new_name)
+            else:
+                self.editor.saveNow(lambda s=self, i=img_name,
                                 n=new_name: s.replace_all_img_src(i, n))
         else:
             self.replace_img_src(new_name)
@@ -245,7 +249,8 @@ class AnnotateDialog(QDialog):
         if browser:
             browser.model.beginReset()
         cnt = self._replace_all_img_src(orig_name, new_name)
-        mw.requireReset()
+        if not self.editor.addMode:
+            mw.requireReset()
         if browser:
             browser.model.endReset()
         tooltip(f"Images across {cnt} note(s) modified",
