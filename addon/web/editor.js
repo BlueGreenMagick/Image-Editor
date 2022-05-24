@@ -59,7 +59,7 @@
           targetField = field;
           const images = field.getElementsByTagName("img");
           for (let i = 0; i < images.length; i++) {
-            if (images[i] = e.target) {
+            if (images[i] == e.target) {
               targetElOrd = i;
             }
           }
