@@ -262,8 +262,14 @@ class AnnotateDialog(QDialog):
     def _replace_all_img_src(self, orig_name: str, new_name: str):
         "new_name doesn't have whitespace, dollar sign, nor double quote"
 
-        orig_name = re.escape(orig_name)
-        new_name = new_name
+        # re.escape isn't compatible with rust regex
+        to_escape = r"\.+*?()|[]{}^$#&-~"
+        escaped_name = ""
+        for i, char in enumerate(orig_name):
+            if char in to_escape:
+                escaped_name += "\\"
+            escaped_name += char
+        orig_name = escaped_name
 
         # Compatibility: 2.1.0+
         n = mw.col.findNotes("<img")
